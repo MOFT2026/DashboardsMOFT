@@ -291,9 +291,9 @@ tr:hover td{background:rgba(79,142,247,.05);}
 
 <div class="section" id="sec-rot-tienda">
   <div class="rt-filter-bar">
-    <div class="rt-filter-group">
+    <div class="rt-filter-group" style="width:100%">
       <div class="rt-filter-label">🏪 Tienda</div>
-      <select class="rt-select" id="rt-tienda-sel" onchange="rtChangeTienda(this.value)"></select>
+      <div class="rt-gen-pills" id="rt-tienda-pills" style="flex-wrap:wrap;gap:6px;"></div>
     </div>
   </div>
   <div class="kpi-row" id="rt-kpi-row" style="padding:14px 20px;"></div>
@@ -665,9 +665,18 @@ document.querySelectorAll('.tab').forEach(t=>{
 
   function initUI(){
     if(init)return;init=true;
-    const ts=document.getElementById('rt-tienda-sel');
-    const ao=document.createElement('option');ao.value='-1';ao.textContent='Todas las tiendas (marca)';ts.appendChild(ao);
-    BDT_T.forEach((t,i)=>{const o=document.createElement('option');o.value=i;o.textContent=t.replace(/^MOF\d+\s*/,'');ts.appendChild(o);});
+    const pp=document.getElementById('rt-tienda-pills');
+    const mkPill=(lbl,val,active)=>{
+      const d=document.createElement('div');d.className='pill'+(active?' active-blue':'');
+      d.textContent=lbl;d.dataset.ti=val;
+      d.onclick=()=>{
+        document.querySelectorAll('#rt-tienda-pills .pill').forEach(x=>x.classList.remove('active-blue'));
+        d.classList.add('active-blue');curTi=parseInt(d.dataset.ti);_rt();
+      };
+      pp.appendChild(d);
+    };
+    mkPill('Todas','-1',true);
+    BDT_T.forEach((t,i)=>mkPill(t.replace(/^MOF\d+\s*/,''),i,false));
     _rt();
   }
 
@@ -688,9 +697,10 @@ document.querySelectorAll('.tab').forEach(t=>{
       }).join('');
       document.getElementById('rt-cat-row').innerHTML=ch?`<div class="rt-cat-wrap">${ch}</div>`:'';
     }else document.getElementById('rt-cat-row').innerHTML='';
+    rows=[...rows].sort((a,b)=>b.ef-a.ef);
     const cards=rows.map(r=>{
       const cumple=r.ef>=ROT_UMBRAL,cc=cumple?'#22c55e':'#ef4444',bg=cumple?'rgba(34,197,94,0.07)':'rgba(239,68,68,0.07)';
-      const furl=r.fo?`https://imagenesonline.gco.com.co/pub/MOFT/${r.fo}.png`:'';
+      const furl=r.fo?IMG_BASE+r.fo+'.jpg':'';
       const img=furl?`<img src="${furl}" class="rt-img" loading="lazy" onerror="this.parentNode.innerHTML='<div class=rt-noimg>👕</div>'">`:'<div class="rt-noimg">👕</div>';
       const tl=curTi===-1&&BDT_T[r.ti]?`<div class="rt-tienda-lbl">${BDT_T[r.ti].replace(/^MOF\d+\s*/,'')}</div>`:'';
       return `<div class="rt-card" style="border-color:${cc};background:${bg}"><div class="rt-img-wrap">${img}</div><div class="rt-card-info"><div class="rt-ref">${r.r}</div>${tl}<div class="rt-badges"><span class="rt-badge">${BDT_C[r.k]||''}</span><span class="rt-badge">${r.g==='M'?'Masc':'Fem'}</span></div><div class="rt-ef" style="color:${cc}">${(r.ef*100).toFixed(1)}%</div><div class="rt-meta"><span>Rot ${(r.rr*100).toFixed(1)}%</span><span>Inv ${r.iv}</span><span>${r.sw}sem</span></div></div></div>`;
@@ -700,7 +710,7 @@ document.querySelectorAll('.tab').forEach(t=>{
 
   window._rtReady=false;
   window._rtRender=_rt;
-  window.rtChangeTienda=function(v){curTi=parseInt(v);_rt();};
+  window.rtChangeTienda=function(v){curTi=parseInt(v);_rt();}; // kept for compat
   document.querySelector('[data-tab="rot-tienda"]').addEventListener('click',function(){initUI();window._rtReady=true;});
 })();
 
