@@ -330,7 +330,10 @@ tr:hover td{background:rgba(79,142,247,.05);}
 </div>
 
 <div class="section" id="sec-res-refs">
-  <div class="rr-list" id="rr-list"></div>
+  <div style="padding:10px 16px 0;">
+  <input id="rr-search" type="text" placeholder="Buscar referencia..." oninput="if(window._rrRender)window._rrRender()" style="width:100%;max-width:320px;padding:7px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text1);font-size:.78rem;outline:none;">
+</div>
+<div class="rr-list" id="rr-list"></div>
 </div>
 <script>
 const KPI_GEN=[
@@ -840,8 +843,15 @@ document.querySelectorAll('.tab').forEach(t=>{
       const eb=pb.length?pb.reduce((s,x)=>s+x.ef,0)/pb.length:0;
       return eb-ea;
     });
-    if(!refs.length){document.getElementById('rr-list').innerHTML='<div style="color:var(--text3);padding:32px;text-align:center">Sin datos para esta selección</div>';return;}
-    const items=refs.map(ref=>{
+    // Search filter
+    const rrQ=(document.getElementById('rr-search')||{}).value||'';
+    const rrQl=rrQ.trim().toLowerCase();
+    const refsF=rrQl?refs.filter(r=>{
+      const lk=_rrLkp[r.r]||{};
+      return r.r.toLowerCase().includes(rrQl)||(lk.rc||'').toLowerCase().includes(rrQl);
+    }):refs;
+    if(!refsF.length){document.getElementById('rr-list').innerHTML='<div style="color:var(--text3);padding:32px;text-align:center">Sin datos para esta selección</div>';return;}
+    const items=refsF.map(ref=>{
       const lkp=_rrLkp[ref.r]||{};
       const furl=ref.fo?IMG_BASE+ref.fo+'.jpg':'';
       const img=furl?`<img src="${furl}" class="rr-img" loading="lazy" onerror="this.parentNode.innerHTML='<div class=rr-noimg>👕</div>'">`:'<div class="rr-noimg">👕</div>';
@@ -864,6 +874,8 @@ document.querySelectorAll('.tab').forEach(t=>{
       const totIt=tiendaRows.reduce((s,x)=>s+x.it,0);
       const avgRr=tiendaRows.length?tiendaRows.reduce((s,x)=>s+x.rr,0)/tiendaRows.length:0;
       const avgEf=tiendaRows.length?tiendaRows.reduce((s,x)=>s+x.ef,0)/tiendaRows.length:0;
+      const totIv=tiendaRows.reduce((s,x)=>s+(x.iv||0),0);
+      const avgDi=tiendaRows.length?Math.round(tiendaRows.reduce((s,x)=>s+x.di,0)/tiendaRows.length):0;
       const trows=tiendaRows.map(td=>{
         const ok=td.ef>=ROT_UMBRAL;
         const bgRow=ok?'rgba(34,197,94,0.25)':'rgba(239,68,68,0.20)';
@@ -878,6 +890,7 @@ document.querySelectorAll('.tab').forEach(t=>{
           <td ${tdEf}>${(td.ef*100).toFixed(1)}%</td>
           <td ${tdS}>${td.vt}</td>
           <td ${tdS}>${td.it}</td>
+          <td ${tdS}>${td.iv||0}</td>
         </tr>`;
       }).join('');
       // Total row from BD_ALL (filtered) — same formulas as Rotación por Colección
@@ -889,9 +902,9 @@ document.querySelectorAll('.tab').forEach(t=>{
       const bdRi=fbRows.length?fbRows.reduce((s,d)=>s+d.rot_ideal,0)/fbRows.length:0;
       const totCol=bdEf>=ROT_UMBRAL?'#22c55e':'#ef4444';
       const right=`<div class="rr-right"><table style="border-collapse:collapse;font-size:.65rem;width:100%;">
-        <thead><tr><th style="padding:4px 10px;text-align:left;font-size:.55rem;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2);white-space:nowrap;">Tienda</th><th style="padding:4px 10px;text-align:right;font-size:.55rem;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2);white-space:nowrap;">Días PDV</th><th style="padding:4px 10px;text-align:right;font-size:.55rem;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2);white-space:nowrap;">Rot Real</th><th style="padding:4px 10px;text-align:right;font-size:.55rem;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2);white-space:nowrap;">Rot Ideal</th><th style="padding:4px 10px;text-align:right;font-size:.55rem;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2);white-space:nowrap;">Eficiencia</th><th style="padding:4px 10px;text-align:right;font-size:.55rem;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2);white-space:nowrap;">Ventas</th><th style="padding:4px 10px;text-align:right;font-size:.55rem;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2);white-space:nowrap;">Ingreso</th></tr></thead>
+        <thead><tr><th style="padding:4px 10px;text-align:left;font-size:.55rem;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2);white-space:nowrap;">Tienda</th><th style="padding:4px 10px;text-align:right;font-size:.55rem;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2);white-space:nowrap;">Días PDV</th><th style="padding:4px 10px;text-align:right;font-size:.55rem;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2);white-space:nowrap;">Rot Real</th><th style="padding:4px 10px;text-align:right;font-size:.55rem;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2);white-space:nowrap;">Rot Ideal</th><th style="padding:4px 10px;text-align:right;font-size:.55rem;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2);white-space:nowrap;">Eficiencia</th><th style="padding:4px 10px;text-align:right;font-size:.55rem;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2);white-space:nowrap;">Ventas</th><th style="padding:4px 10px;text-align:right;font-size:.55rem;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2);white-space:nowrap;">Ingreso</th><th style="padding:4px 10px;text-align:right;font-size:.55rem;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2);white-space:nowrap;">Inv PDV</th></tr></thead>
         <tbody>${trows}</tbody>
-        <tfoot><tr><td>TOTAL · BD Rotación</td><td>—</td><td>${(bdRr*100).toFixed(1)}%</td><td>${(bdRi*100).toFixed(1)}%</td><td style="color:${totCol};font-weight:700">${(bdEf*100).toFixed(1)}%</td><td>${bdVt}</td><td>${bdIt}</td></tr></tfoot>
+        <tfoot><tr><td>TOTAL · BD Rotación</td><td style="text-align:right;padding:4px 10px;">${avgDi}</td><td style="text-align:right;padding:4px 10px;">${(bdRr*100).toFixed(1)}%</td><td style="text-align:right;padding:4px 10px;">${(bdRi*100).toFixed(1)}%</td><td style="text-align:right;padding:4px 10px;color:${totCol};font-weight:700">${(bdEf*100).toFixed(1)}%</td><td style="text-align:right;padding:4px 10px;">${bdVt}</td><td style="text-align:right;padding:4px 10px;">${bdIt}</td><td style="text-align:right;padding:4px 10px;">${totIv}</td></tr></tfoot>
       </table></div>`;
       return`<div class="rr-item">${left}${right}</div>`;
     }).join('');
