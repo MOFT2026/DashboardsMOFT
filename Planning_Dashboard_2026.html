@@ -136,6 +136,24 @@ tr:hover td{background:rgba(79,142,247,.05);}
 .rt-ef{font-size:1.5rem;font-weight:800;line-height:1.1;}
 .rt-meta{display:flex;gap:8px;font-size:.68rem;color:var(--text3);}
 .rt-tienda-lbl{font-size:.62rem;color:var(--text3);margin-bottom:2px;}
+
+/* ══ RESUMEN DE REFERENCIAS ══ */
+.rr-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;padding:16px 20px;}
+.rr-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;gap:12px;padding:12px;transition:transform .15s;}
+.rr-card:hover{transform:translateY(-2px);}
+.rr-img-wrap{width:70px;min-width:70px;aspect-ratio:3/4;background:var(--bg3);border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.rr-img{width:100%;height:100%;object-fit:cover;}
+.rr-noimg{font-size:1.8rem;color:var(--text3);}
+.rr-card-body{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;}
+.rr-ref{font-size:.82rem;font-weight:700;color:var(--text1);}
+.rr-meta-top{display:flex;gap:4px;flex-wrap:wrap;}
+.rr-score{font-size:1.25rem;font-weight:800;line-height:1.2;}
+.rr-avg{font-size:.68rem;color:var(--text3);margin-bottom:2px;}
+.rr-dots{display:flex;flex-wrap:wrap;gap:3px;}
+.rr-dot{font-size:.53rem;padding:2px 5px;border-radius:3px;font-weight:700;cursor:default;white-space:nowrap;}
+.rr-dot-ok{background:rgba(34,197,94,0.18);color:#22c55e;}
+.rr-dot-no{background:rgba(239,68,68,0.13);color:#ef4444;}
+.rr-dot-na{background:var(--bg3);color:var(--text3);opacity:.5;}
 </style>
 </head>
 <body>
@@ -163,6 +181,7 @@ tr:hover td{background:rgba(79,142,247,.05);}
   <div class="tab" data-tab="best">⭐ Best / Worst Sellers</div>
   <div class="tab" data-tab="piramide">🔺 Rotación por Pirámide</div>
   <div class="tab" data-tab="rot-tienda">🏪 Rotación por Tienda</div>
+  <div class="tab" data-tab="res-refs">🔍 Resumen de Referencias</div>
 </div>
 <div class="main">
 
@@ -301,6 +320,9 @@ tr:hover td{background:rgba(79,142,247,.05);}
   <div class="rt-cards-grid" id="rt-cards-grid"></div>
 </div>
 
+<div class="section" id="sec-res-refs">
+  <div class="rr-cards-grid" id="rr-cards-grid"></div>
+</div>
 <script>
 const KPI_GEN=[
 {"genero":"Femenino","categoria":"Buzos","mes":"Enero","mes_num":1,"ppto_und":68.0,"ppto_cop":7175886.055912013,"proy_und":90.0,"proy_cop":9397936.0,"aur_obj":104421.51111111112,"margen_obj":0.57,"venta_neta":9397936.0,"venta_neta_aa":0.0,"und_vendidas":90.0,"und_aa":0.0,"mg_pct":0.48040080289970055,"mg_pct_aa":0.0,"dto_pct":0.10824081014273183,"dto_pct_aa":0.0,"venta_mes_actual_aa":0.0,"und_mes_actual_aa":0.0},
@@ -654,7 +676,23 @@ document.querySelectorAll('.tab').forEach(t=>{
   let init=false,curTi=-1;
 
   function getRows(){
-    let rows=curTi===-1?BDT_R:BDT_R.filter(r=>r.ti===curTi);
+    if(curTi===-1){
+      // Todas: use BD_ALL (BD_Rotacion consolidated) via filteredBD()
+      const fbRows=filteredBD();
+      const seen={};
+      fbRows.forEach(d=>{
+        if(!seen[d.referencia]||d.eficiencia>seen[d.referencia].ef){
+          seen[d.referencia]={
+            r:d.referencia,g:d.genero.charAt(0).toUpperCase(),
+            k:BDT_C.indexOf(d.categoria),fo:d.foto,cl:d.coleccion_anio,ti:-1,
+            rr:d.rot_real,ef:d.eficiencia,
+            iv:d.inv_pdv||d.inventario_pdv||0,sw:d.semanas_pdv||Math.round((d.dias_pdv||0)/7)||0
+          };
+        }
+      });
+      return Object.values(seen);
+    }
+    let rows=BDT_R.filter(r=>r.ti===curTi);
     if(fCol&&fCol.length) rows=rows.filter(r=>fCol.includes(r.cl));
     if(fGen&&fGen.length){
       const gs=new Set(fGen.map(g=>g.charAt(0).toUpperCase()));
@@ -722,6 +760,54 @@ document.querySelectorAll('.tab').forEach(t=>{
   window.rtChangeTienda=function(v){curTi=parseInt(v);_rt();}; // kept for compat
   document.querySelector('[data-tab="rot-tienda"]').addEventListener('click',function(){initUI();window._rtReady=true;});
 })();
+// ══ RESUMEN DE REFERENCIAS ══
+(function(){
+  const TIENDA_SHORT=['MAY2','CAMINO','RIONEG','PREMIUM','GUAYAB','TERMIN','FLA2','CENTRAL','PUERTA N','LA CEJA','VIVA ENV','FABRIC','MOLINOS','SAN NIC','MAY1'];
+  let rrInit=false;
+
+  function _rr(){
+    if(!rrInit)return;
+    const meta=RAW.tiendas&&RAW.tiendas.tiendas?RAW.tiendas:{tiendas:[],cats:[],rows:[]};
+    const BDT_T=meta.tiendas,BDT_C=meta.cats,BDT_R=meta.rows;
+    let rows=BDT_R;
+    if(fCol&&fCol.length)rows=rows.filter(r=>fCol.includes(r.cl));
+    if(fGen&&fGen.length){const gs=new Set(fGen.map(g=>g.charAt(0).toUpperCase()));rows=rows.filter(r=>gs.has(r.g));}
+    if(fCat){const ci=BDT_C.indexOf(fCat);if(ci>=0)rows=rows.filter(r=>r.k===ci);}
+    // Group by referencia
+    const refMap={};
+    rows.forEach(r=>{
+      if(!refMap[r.r])refMap[r.r]={r:r.r,g:r.g,k:r.k,fo:r.fo,t:new Array(15).fill(null)};
+      if(r.ti>=0&&r.ti<15)refMap[r.r].t[r.ti]={ef:r.ef,ok:r.ef>=ROT_UMBRAL};
+    });
+    const refs=Object.values(refMap).sort((a,b)=>{
+      const na=a.t.filter(x=>x&&x.ok).length,nb=b.t.filter(x=>x&&x.ok).length;
+      if(nb!==na)return nb-na;
+      const ea=a.t.filter(x=>x).reduce((s,x)=>s+x.ef,0)/(a.t.filter(x=>x).length||1);
+      const eb=b.t.filter(x=>x).reduce((s,x)=>s+x.ef,0)/(b.t.filter(x=>x).length||1);
+      return eb-ea;
+    });
+    if(!refs.length){document.getElementById('rr-cards-grid').innerHTML='<div style="color:var(--text3);padding:32px;text-align:center">Sin datos para esta selección</div>';return;}
+    const cards=refs.map(ref=>{
+      const present=ref.t.filter(x=>x);
+      const nc=present.filter(x=>x.ok).length;
+      const pct=present.length?nc/present.length:0;
+      const avgEf=present.length?present.reduce((s,x)=>s+x.ef,0)/present.length:0;
+      const headCol=pct>=0.7?'#22c55e':pct>=0.4?'#f59e0b':'#ef4444';
+      const furl=ref.fo?IMG_BASE+ref.fo+'.jpg':'';
+      const img=furl?`<img src="${furl}" class="rr-img" loading="lazy" onerror="this.parentNode.innerHTML='<div class=rr-noimg>👕</div>'">`:'<div class="rr-noimg">👕</div>';
+      const dots=TIENDA_SHORT.map((ts,i)=>{
+        const td=ref.t[i];
+        if(!td)return`<span class="rr-dot rr-dot-na" title="${BDT_T[i]||''}">${ts}</span>`;
+        return`<span class="rr-dot ${td.ok?'rr-dot-ok':'rr-dot-no'}" title="${BDT_T[i]||''} ${(td.ef*100).toFixed(0)}%">${ts}</span>`;
+      }).join('');
+      return`<div class="rr-card"><div class="rr-img-wrap">${img}</div><div class="rr-card-body"><div class="rr-ref">${ref.r}</div><div class="rr-meta-top"><span class="rt-badge">${BDT_C[ref.k]||''}</span><span class="rt-badge">${ref.g==='M'?'Masc':'Fem'}</span></div><div class="rr-score" style="color:${headCol}">${nc}/${present.length} <span style="font-size:.72rem;font-weight:400">tiendas ✓</span></div><div class="rr-avg">Prom ${(avgEf*100).toFixed(0)}%</div><div class="rr-dots">${dots}</div></div></div>`;
+    }).join('');
+    document.getElementById('rr-cards-grid').innerHTML=cards;
+  }
+
+  window._rrReady=false;window._rrRender=_rr;
+  document.querySelector('[data-tab="res-refs"]').addEventListener('click',function(){rrInit=true;window._rrReady=true;_rr();});
+})();
 
 function updateHeader(){
   const l=fMes.length?fMes.map(m=>m.charAt(0).toUpperCase()+m.slice(1)).join(', '):'Acumulado';
@@ -729,7 +815,7 @@ function updateHeader(){
   document.getElementById('hdr-periodo').textContent=l+' · '+c+' · Act: '+FECHA_ACT;
 }
 
-function render(){updateHeader();renderPresupuesto();renderFit();renderColeccion();renderReferencias();renderBestWorst();renderPiramide();renderKpiGenerales();if(window._rtReady)window._rtRender();}
+function render(){updateHeader();renderPresupuesto();renderFit();renderColeccion();renderReferencias();renderBestWorst();renderPiramide();renderKpiGenerales();if(window._rtReady)window._rtRender();if(window._rrReady)window._rrRender();}
 
 // ════ PRESUPUESTO ════
 const CAT_ICONS={'Camisetas':'👕','Camisas':'👔','Jeans':'👖','Pantalones':'👖','Buzos':'🧥','Chaquetas':'🧥','Faldas':'👗','Polos':'👕','Bermudas':'🩳','Vestidos':'👗'};
