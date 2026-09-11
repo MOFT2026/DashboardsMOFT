@@ -138,26 +138,31 @@ tr:hover td{background:rgba(79,142,247,.05);}
 .rt-tienda-lbl{font-size:.62rem;color:var(--text3);margin-bottom:2px;}
 
 /* ══ RESUMEN DE REFERENCIAS ══ */
-.rr-list{display:flex;flex-direction:column;gap:14px;padding:16px 20px;}
-.rr-item{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;gap:0;}
-.rr-left{width:130px;min-width:130px;display:flex;flex-direction:column;background:var(--bg3);padding:10px;}
-.rr-img-wrap{width:100%;aspect-ratio:3/4;background:var(--bg2);border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:8px;}
+.rr-list{display:flex;flex-direction:column;gap:10px;padding:14px 20px;}
+.rr-item{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;}
+.rr-left{width:150px;min-width:150px;display:flex;flex-direction:column;background:var(--bg3);padding:10px;border-right:1px solid var(--border);}
+.rr-img-wrap{width:100%;aspect-ratio:3/4;background:var(--bg2);border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:7px;max-height:160px;}
 .rr-img{width:100%;height:100%;object-fit:cover;}
 .rr-noimg{font-size:2.5rem;color:var(--text3);}
-.rr-ref-code{font-size:.78rem;font-weight:700;color:var(--text1);}
-.rr-ref-color{font-size:.65rem;color:var(--text3);line-height:1.3;margin-bottom:4px;}
+.rr-ref-code{font-size:.76rem;font-weight:700;color:var(--text1);}
+.rr-ref-color{font-size:.62rem;color:var(--text3);line-height:1.3;margin-bottom:5px;}
 .rr-attrs{display:flex;flex-direction:column;gap:2px;}
-.rr-attr{font-size:.65rem;color:var(--text3);}
+.rr-attr{font-size:.62rem;color:var(--text3);}
 .rr-attr span{color:var(--text2);font-weight:600;}
 .rr-right{flex:1;overflow-x:auto;}
-.rr-table{width:100%;border-collapse:collapse;font-size:.75rem;}
-.rr-table thead th{padding:7px 10px;text-align:left;font-size:.65rem;font-weight:600;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg2);}
-.rr-table tbody td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap;}
+.rr-table{width:100%;border-collapse:collapse;font-size:.7rem;}
+.rr-table thead th{padding:5px 8px;text-align:right;font-size:.6rem;font-weight:700;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg2);letter-spacing:.04em;}
+.rr-table thead th:first-child{text-align:left;}
+.rr-table tbody td{padding:5px 8px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap;text-align:right;}
+.rr-table tbody td:first-child{text-align:left;}
 .rr-table tbody tr:last-child td{border-bottom:none;}
-.rr-table tfoot td{padding:7px 10px;font-weight:700;color:var(--text1);border-top:2px solid var(--border);background:var(--bg3);}
+.rr-table tbody tr.rr-row-ok{background:rgba(34,197,94,0.07);}
+.rr-table tbody tr.rr-row-no{background:rgba(239,68,68,0.04);}
+.rr-table tfoot td{padding:5px 8px;font-weight:700;color:var(--text1);border-top:2px solid var(--border);background:var(--bg3);text-align:right;}
+.rr-table tfoot td:first-child{text-align:left;}
 .rr-ef-ok{color:#22c55e;font-weight:700;}
 .rr-ef-no{color:#ef4444;font-weight:700;}
-.rr-td-name{font-weight:600;color:var(--text1);}
+.rr-td-name{font-weight:600;color:var(--text1);font-size:.68rem;}
 </style>
 </head>
 <body>
@@ -813,7 +818,7 @@ document.querySelectorAll('.tab').forEach(t=>{
       const avgEf=tiendaRows.length?tiendaRows.reduce((s,x)=>s+x.ef,0)/tiendaRows.length:0;
       const trows=tiendaRows.map(td=>{
         const ok=td.ef>=ROT_UMBRAL;
-        return`<tr>
+        return`<tr class="${ok?'rr-row-ok':'rr-row-no'}">
           <td class="rr-td-name">${BDT_T[td.ti].replace(/^MOF\d+\s*/,'')}</td>
           <td>${td.di}</td>
           <td>${(td.rr*100).toFixed(1)}%</td>
