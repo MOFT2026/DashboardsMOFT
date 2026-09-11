@@ -293,7 +293,7 @@ tr:hover td{background:rgba(79,142,247,.05);}
   <div class="rt-filter-bar">
     <div class="rt-filter-group" style="width:100%">
       <div class="rt-filter-label">🏪 Tienda</div>
-      <div class="rt-gen-pills" id="rt-tienda-pills" style="flex-wrap:wrap;gap:6px;"></div>
+      <div class="rt-gen-pills" id="rt-tienda-pills" style="flex-wrap:wrap;gap:6px;justify-content:center;"></div>
     </div>
   </div>
   <div class="kpi-row" id="rt-kpi-row" style="padding:14px 20px;"></div>
@@ -683,7 +683,8 @@ document.querySelectorAll('.tab').forEach(t=>{
 
   function _rt(){
     if(!init)return;
-    const rows=getRows();
+    const _rows=getRows();
+    const rows=[..._rows].sort((a,b)=>b.ef-a.ef);
     const total=rows.length,nc=rows.filter(r=>r.ef>=ROT_UMBRAL).length;
     const pct=total?nc/total:0,col=pct>=0.7?'#22c55e':'#ef4444';
     document.getElementById('rt-kpi-row').innerHTML=
@@ -698,7 +699,6 @@ document.querySelectorAll('.tab').forEach(t=>{
       }).join('');
       document.getElementById('rt-cat-row').innerHTML=ch?`<div class="rt-cat-wrap">${ch}</div>`:'';
     }else document.getElementById('rt-cat-row').innerHTML='';
-    rows=[...rows].sort((a,b)=>b.ef-a.ef);
     const cards=rows.map(r=>{
       const cumple=r.ef>=ROT_UMBRAL,cc=cumple?'#22c55e':'#ef4444',bg=cumple?'rgba(34,197,94,0.07)':'rgba(239,68,68,0.07)';
       const furl=r.fo?IMG_BASE+r.fo+'.jpg':'';
