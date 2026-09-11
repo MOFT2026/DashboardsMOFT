@@ -746,12 +746,33 @@ document.querySelectorAll('.tab').forEach(t=>{
       }).join('');
       document.getElementById('rt-cat-row').innerHTML=ch?`<div class="rt-cat-wrap">${ch}</div>`:'';
     }else document.getElementById('rt-cat-row').innerHTML='';
+    // Build ref_color lookup from BD_ALL
+    if(!window._rtRcLkp){
+      window._rtRcLkp={};
+      BD_ALL.forEach(d=>{if(d.referencia&&!window._rtRcLkp[d.referencia])window._rtRcLkp[d.referencia]={rc:d.ref_color||d.referencia,pvp:d.pvp,fit:d.fit,pir:d.piramide};});
+    }
     const cards=rows.map(r=>{
-      const cumple=r.ef>=ROT_UMBRAL,cc=cumple?'#22c55e':'#ef4444',bg=cumple?'rgba(34,197,94,0.07)':'rgba(239,68,68,0.07)';
+      const cumple=r.ef>=ROT_UMBRAL,cc=cumple?'#22c55e':'#ef4444',bg=cumple?'rgba(34,197,94,0.08)':'rgba(239,68,68,0.08)';
       const furl=r.fo?IMG_BASE+r.fo+'.jpg':'';
       const img=furl?`<img src="${furl}" class="rt-img" loading="lazy" onerror="this.parentNode.innerHTML='<div class=rt-noimg>👕</div>'">`:'<div class="rt-noimg">👕</div>';
-      const tl=curTi===-1&&BDT_T[r.ti]?`<div class="rt-tienda-lbl">${BDT_T[r.ti].replace(/^MOF\d+\s*/,'')}</div>`:'';
-      return `<div class="rt-card" style="border-color:${cc};background:${bg}"><div class="rt-img-wrap">${img}</div><div class="rt-card-info"><div class="rt-ref">${r.r}</div>${tl}<div class="rt-badges"><span class="rt-badge">${BDT_C[r.k]||''}</span><span class="rt-badge">${r.g==='M'?'Masc':'Fem'}</span></div><div class="rt-ef" style="color:${cc}">${(r.ef*100).toFixed(1)}%</div><div class="rt-meta"><span>Rot ${(r.rr*100).toFixed(1)}%</span><span>Inv ${r.iv||0}</span><span>${r.sw||0}sem</span></div></div></div>`;
+      const lkp=window._rtRcLkp[r.r]||{};
+      const refColor=(lkp.rc||r.r).replace(r.r,'').trim()||lkp.rc||r.r;
+      const pvpFmt=lkp.pvp?'$'+Math.round(lkp.pvp).toLocaleString():'—';
+      const compraIdeal=Math.max(0,Math.round((r.ri-r.rr)*(r.iv||0)));
+      const popData=JSON.stringify({rc:refColor,gen:r.g==='M'?'Masculino':'Femenino',cat:BDT_C[r.k]||'—',pvp:pvpFmt,vt:r.vt||0,it:r.it||0,iv:r.iv||0,ci:compraIdeal});
+      return `<div class="rt-card" style="border-color:${cc};background:${bg};position:relative;cursor:pointer;"
+        onmouseenter="rtShowPop(event,${popData.replace(/"/g,'&quot;')})"
+        onmouseleave="rtHidePop()">
+        <div class="rt-img-wrap">${img}</div>
+        <div class="rt-card-info">
+          <div class="rt-ref" style="font-size:.62rem;font-weight:700;color:var(--text1);line-height:1.2;">${refColor}</div>
+          <div style="font-size:.55rem;color:var(--text3);margin-bottom:3px;">${r.r}</div>
+          <div style="font-size:.62rem;color:var(--text3);margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em;">Eficiencia</div>
+          <div class="rt-ef" style="color:${cc};font-size:1.1rem;font-weight:800;line-height:1.1;">${(r.ef*100).toFixed(1)}%</div>
+          <div style="margin-top:5px;font-size:.58rem;color:var(--text3);">Rot Real <span style="color:var(--text2);font-weight:600;">${(r.rr*100).toFixed(1)}%</span> / Ideal <span style="color:var(--text2);font-weight:600;">${(r.ri*100).toFixed(1)}%</span></div>
+          <div style="font-size:.58rem;color:var(--text3);">Días PDV <span style="color:var(--text2);font-weight:600;">${r.di||0}</span></div>
+        </div>
+      </div>`;
     }).join('');
     document.getElementById('rt-cards-grid').innerHTML=cards||'<div style="color:var(--text3);padding:32px;text-align:center">Sin datos</div>';
   }
@@ -759,6 +780,33 @@ document.querySelectorAll('.tab').forEach(t=>{
   window._rtReady=false;
   window._rtRender=_rt;
   window.rtChangeTienda=function(v){curTi=parseInt(v);_rt();}; // kept for compat
+
+  // Hover popup
+  (function(){
+    if(document.getElementById('rt-pop'))return;
+    const pop=document.createElement('div');
+    pop.id='rt-pop';
+    pop.style.cssText='display:none;position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:.72rem;z-index:9999;box-shadow:0 6px 24px rgba(0,0,0,.25);pointer-events:none;min-width:190px;line-height:1.7;';
+    document.body.appendChild(pop);
+  })();
+  window.rtShowPop=function(ev,d){
+    try{if(typeof d==='string')d=JSON.parse(d);}catch(e){return;}
+    const pop=document.getElementById('rt-pop');if(!pop)return;
+    const fmt=n=>Number(n).toLocaleString('es-CO');
+    pop.innerHTML=`<div style="font-weight:700;font-size:.78rem;margin-bottom:6px;color:var(--text1);">${d.rc}</div>
+      <div style="color:var(--text3);">Género: <span style="color:var(--text2);font-weight:600;">${d.gen}</span></div>
+      <div style="color:var(--text3);">Categoría: <span style="color:var(--text2);font-weight:600;">${d.cat}</span></div>
+      <div style="color:var(--text3);">PVP: <span style="color:var(--text2);font-weight:600;">${d.pvp}</span></div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:6px 0;">
+      <div style="color:var(--text3);">Venta Total: <span style="color:var(--text2);font-weight:600;">${fmt(d.vt)} uds</span></div>
+      <div style="color:var(--text3);">Ingreso Total: <span style="color:var(--text2);font-weight:600;">$${fmt(d.it)}</span></div>
+      <div style="color:var(--text3);">Inv. PDV: <span style="color:var(--text2);font-weight:600;">${fmt(d.iv)} uds</span></div>
+      <div style="color:var(--text3);">Compra Ideal: <span style="color:#3b82f6;font-weight:700;">${fmt(d.ci)} uds</span></div>`;
+    const x=Math.min(ev.clientX+14, window.innerWidth-210);
+    const y=Math.min(ev.clientY-10, window.innerHeight-220);
+    pop.style.left=x+'px'; pop.style.top=y+'px'; pop.style.display='block';
+  };
+  window.rtHidePop=function(){const p=document.getElementById('rt-pop');if(p)p.style.display='none';};
   document.querySelector('[data-tab="rot-tienda"]').addEventListener('click',function(){initUI();window._rtReady=true;});
 })();
 // ══ RESUMEN DE REFERENCIAS ══
