@@ -140,29 +140,31 @@ tr:hover td{background:rgba(79,142,247,.05);}
 /* ══ RESUMEN DE REFERENCIAS ══ */
 .rr-list{display:flex;flex-direction:column;gap:10px;padding:14px 20px;}
 .rr-item{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;}
-.rr-left{width:150px;min-width:150px;display:flex;flex-direction:column;background:var(--bg3);padding:10px;border-right:1px solid var(--border);}
-.rr-img-wrap{width:100%;aspect-ratio:3/4;background:var(--bg2);border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:7px;max-height:160px;}
+.rr-left{width:165px;min-width:165px;display:flex;flex-direction:column;align-items:center;background:var(--bg3);padding:10px 8px;border-right:1px solid var(--border);}
+.rr-img-wrap{width:100%;aspect-ratio:3/4;background:var(--bg2);border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:8px;max-height:185px;}
 .rr-img{width:100%;height:100%;object-fit:cover;}
-.rr-noimg{font-size:2.5rem;color:var(--text3);}
-.rr-ref-code{font-size:.76rem;font-weight:700;color:var(--text1);}
-.rr-ref-color{font-size:.62rem;color:var(--text3);line-height:1.3;margin-bottom:5px;}
-.rr-attrs{display:flex;flex-direction:column;gap:2px;}
-.rr-attr{font-size:.62rem;color:var(--text3);}
+.rr-noimg{font-size:2.8rem;color:var(--text3);}
+.rr-ref-code{font-size:.76rem;font-weight:700;color:var(--text1);text-align:center;}
+.rr-ref-color{font-size:.6rem;color:var(--text3);line-height:1.3;margin-bottom:5px;text-align:center;}
+.rr-attrs{display:flex;flex-direction:column;gap:2px;width:100%;}
+.rr-attr{font-size:.6rem;color:var(--text3);}
 .rr-attr span{color:var(--text2);font-weight:600;}
 .rr-right{flex:1;overflow-x:auto;}
-.rr-table{width:100%;border-collapse:collapse;font-size:.7rem;}
-.rr-table thead th{padding:5px 8px;text-align:right;font-size:.6rem;font-weight:700;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg2);letter-spacing:.04em;}
+.rr-table{border-collapse:collapse;font-size:.7rem;width:100%;table-layout:fixed;}
+.rr-table col.c-tienda{width:148px;}
+.rr-table col.c-num{width:72px;}
+.rr-table thead th{padding:5px 7px;text-align:right;font-size:.59rem;font-weight:700;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg2);letter-spacing:.03em;}
 .rr-table thead th:first-child{text-align:left;}
-.rr-table tbody td{padding:5px 8px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap;text-align:right;}
+.rr-table tbody td{padding:4px 7px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap;text-align:right;}
 .rr-table tbody td:first-child{text-align:left;}
 .rr-table tbody tr:last-child td{border-bottom:none;}
-.rr-table tbody tr.rr-row-ok{background:rgba(34,197,94,0.07);}
-.rr-table tbody tr.rr-row-no{background:rgba(239,68,68,0.04);}
-.rr-table tfoot td{padding:5px 8px;font-weight:700;color:var(--text1);border-top:2px solid var(--border);background:var(--bg3);text-align:right;}
+.rr-table tbody tr.rr-row-ok{background:rgba(34,197,94,0.14);}
+.rr-table tbody tr.rr-row-no{background:rgba(239,68,68,0.10);}
+.rr-table tfoot td{padding:5px 7px;font-weight:700;color:var(--text1);border-top:2px solid var(--border);background:var(--bg3);text-align:right;}
 .rr-table tfoot td:first-child{text-align:left;}
 .rr-ef-ok{color:#22c55e;font-weight:700;}
 .rr-ef-no{color:#ef4444;font-weight:700;}
-.rr-td-name{font-weight:600;color:var(--text1);font-size:.68rem;}
+.rr-td-name{font-weight:600;color:var(--text1);font-size:.67rem;}
 </style>
 </head>
 <body>
@@ -828,10 +830,19 @@ document.querySelectorAll('.tab').forEach(t=>{
           <td>${td.it}</td>
         </tr>`;
       }).join('');
+      // Total row from BD_ALL (filtered) — same formulas as Rotación por Colección
+      const fbRows=filteredBD().filter(d=>d.referencia===ref.r);
+      const bdVt=fbRows.reduce((s,d)=>s+d.venta_total,0);
+      const bdIt=fbRows.reduce((s,d)=>s+d.ingreso_total,0);
+      const bdRr=bdIt>0?bdVt/bdIt:0;
+      const bdEf=fbRows.length?fbRows.reduce((s,d)=>s+d.eficiencia,0)/fbRows.length:avgEf;
+      const bdRi=fbRows.length?fbRows.reduce((s,d)=>s+d.rot_ideal,0)/fbRows.length:0;
+      const totCol=bdEf>=ROT_UMBRAL?'#22c55e':'#ef4444';
       const right=`<div class="rr-right"><table class="rr-table">
+        <colgroup><col class="c-tienda"><col class="c-num"><col class="c-num"><col class="c-num"><col class="c-num"><col class="c-num"><col class="c-num"></colgroup>
         <thead><tr><th>Tienda</th><th>Días PDV</th><th>Rot Real</th><th>Rot Ideal</th><th>Eficiencia</th><th>Ventas</th><th>Ingreso</th></tr></thead>
         <tbody>${trows}</tbody>
-        <tfoot><tr><td>TOTAL / PROM</td><td>—</td><td>${(avgRr*100).toFixed(1)}%</td><td>—</td><td style="color:${avgEf>=ROT_UMBRAL?'#22c55e':'#ef4444'};font-weight:700">${(avgEf*100).toFixed(1)}%</td><td>${totVt}</td><td>${totIt}</td></tr></tfoot>
+        <tfoot><tr><td>TOTAL · BD Rotación</td><td>—</td><td>${(bdRr*100).toFixed(1)}%</td><td>${(bdRi*100).toFixed(1)}%</td><td style="color:${totCol};font-weight:700">${(bdEf*100).toFixed(1)}%</td><td>${bdVt}</td><td>${bdIt}</td></tr></tfoot>
       </table></div>`;
       return`<div class="rr-item">${left}${right}</div>`;
     }).join('');
