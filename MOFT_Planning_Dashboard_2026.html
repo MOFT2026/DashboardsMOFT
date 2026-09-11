@@ -150,9 +150,7 @@ tr:hover td{background:rgba(79,142,247,.05);}
 .rr-attr{font-size:.6rem;color:var(--text3);}
 .rr-attr span{color:var(--text2);font-weight:600;}
 .rr-right{flex:1;overflow-x:auto;}
-.rr-table{border-collapse:collapse;font-size:.7rem;width:auto;}
-.rr-table col.c-tienda{width:115px;}
-.rr-table col.c-num{width:60px;}
+.rr-table{border-collapse:collapse;font-size:.7rem;width:auto;white-space:nowrap;}
 .rr-table thead th{padding:5px 6px;text-align:right;font-size:.59rem;font-weight:700;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg2);letter-spacing:.03em;}
 .rr-table thead th:first-child{text-align:left;}
 .rr-table tbody td{padding:4px 6px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap;text-align:right;}
@@ -839,7 +837,6 @@ document.querySelectorAll('.tab').forEach(t=>{
       const bdRi=fbRows.length?fbRows.reduce((s,d)=>s+d.rot_ideal,0)/fbRows.length:0;
       const totCol=bdEf>=ROT_UMBRAL?'#22c55e':'#ef4444';
       const right=`<div class="rr-right"><table class="rr-table">
-        <colgroup><col class="c-tienda"><col class="c-num"><col class="c-num"><col class="c-num"><col class="c-num"><col class="c-num"><col class="c-num"></colgroup>
         <thead><tr><th>Tienda</th><th>Días PDV</th><th>Rot Real</th><th>Rot Ideal</th><th>Eficiencia</th><th>Ventas</th><th>Ingreso</th></tr></thead>
         <tbody>${trows}</tbody>
         <tfoot><tr><td>TOTAL · BD Rotación</td><td>—</td><td>${(bdRr*100).toFixed(1)}%</td><td>${(bdRi*100).toFixed(1)}%</td><td style="color:${totCol};font-weight:700">${(bdEf*100).toFixed(1)}%</td><td>${bdVt}</td><td>${bdIt}</td></tr></tfoot>
