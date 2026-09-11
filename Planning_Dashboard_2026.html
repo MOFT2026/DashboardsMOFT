@@ -697,7 +697,8 @@ document.querySelectorAll('.tab').forEach(t=>{
           seen[d.referencia]={
             r:d.referencia,g:d.genero.charAt(0).toUpperCase(),
             k:BDT_C.indexOf(d.categoria),fo:d.foto,cl:d.coleccion_anio,ti:-1,
-            rr:d.rot_real,ef:d.eficiencia,
+            rr:d.rot_real,ri:d.rot_ideal||0,ef:d.eficiencia,
+            vt:d.venta_total||0,it:d.ingreso_total||0,di:d.dias_pdv||0,
             iv:d.inv_pdv||d.inventario_pdv||0,sw:d.semanas_pdv||Math.round((d.dias_pdv||0)/7)||0
           };
         }
