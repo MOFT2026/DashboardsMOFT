@@ -766,7 +766,7 @@ document.querySelectorAll('.tab').forEach(t=>{
       const refColor=(lkp.rc||r.r).replace(r.r,'').trim()||lkp.rc||r.r;
       const pvpFmt=lkp.pvp?'$'+Math.round(lkp.pvp).toLocaleString():'—';
       const compraIdeal=r.ci!=null?r.ci:0;
-      const popData=JSON.stringify({rc:refColor,gen:r.g==='M'?'Masculino':'Femenino',cat:BDT_C[r.k]||'—',pvp:pvpFmt,vt:r.vt||0,it:r.it||0,iv:r.iv||0,ci:compraIdeal});
+      const popData=JSON.stringify({rc:refColor,gen:r.g==='M'?'Masculino':'Femenino',cat:BDT_C[r.k]||'—',fit:lkp.fit||'—',pir:lkp.pir||'—',pvp:pvpFmt,vt:r.vt||0,it:r.it||0,iv:r.iv||0,ci:compraIdeal});
       return `<div class="rt-card" style="border-color:${cc};background:${bg};position:relative;cursor:pointer;"
         onmouseenter="rtShowPop(event,${popData.replace(/"/g,'&quot;')})"
         onmouseleave="rtHidePop()">
@@ -803,6 +803,8 @@ document.querySelectorAll('.tab').forEach(t=>{
     pop.innerHTML=`<div style="font-weight:700;font-size:.78rem;margin-bottom:6px;color:var(--text1);">${d.rc}</div>
       <div style="color:var(--text3);">Género: <span style="color:var(--text2);font-weight:600;">${d.gen}</span></div>
       <div style="color:var(--text3);">Categoría: <span style="color:var(--text2);font-weight:600;">${d.cat}</span></div>
+      <div style="color:var(--text3);">Fit: <span style="color:var(--text2);font-weight:600;">${d.fit||'—'}</span></div>
+      <div style="color:var(--text3);">Pirámide: <span style="color:var(--text2);font-weight:600;">${d.pir||'—'}</span></div>
       <div style="color:var(--text3);">PVP: <span style="color:var(--text2);font-weight:600;">${d.pvp}</span></div>
       <hr style="border:none;border-top:1px solid var(--border);margin:6px 0;">
       <div style="color:var(--text3);">Venta Total: <span style="color:var(--text2);font-weight:600;">${fmt(d.vt)} uds</span></div>
