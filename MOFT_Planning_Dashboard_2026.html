@@ -1693,7 +1693,9 @@ function renderKpiGenerales(){
   if(lbl) lbl.textContent = isProy ? 'Comparativo: Proyección vs cierre mes año anterior' : 'Comparativo: Venta Real — Ago. usa venta al mismo día AA';
 
   // Filters
+  const _moAct=MO_ALL.slice(0,mesIdx+1).map(m=>m.toLowerCase());
   function kgF(d){
+    if(!_moAct.includes(d.mes.toLowerCase())) return false; // ignorar meses futuros (Acumulado = hasta mes actual)
     if(fMes.length&&!fMes.includes(d.mes.toLowerCase())) return false;
     if(fGen.length&&!fGen.includes(d.genero)) return false;
     if(fCat!==''&&d.categoria!==fCat) return false;
@@ -1706,6 +1708,7 @@ function renderKpiGenerales(){
   }
   const KG=KPI_GEN.filter(kgF);
   const KGnm=KPI_GEN.filter(d=>{
+    if(!_moAct.includes(d.mes.toLowerCase())) return false;
     if(fGen.length&&!fGen.includes(d.genero)) return false;
     if(fCat!==''&&d.categoria!==fCat) return false;
     return true;
