@@ -524,8 +524,10 @@ const BD_ALL=RAW.bd,PPTO_ALL=RAW.presupuesto,MG_OBJ=RAW.margen_obj,ROT_UMBRAL=RA
 const ROT_TABLE=[0,0.13,0.22,0.32,0.39,0.42,0.47,0.51,0.54,0.56,0.60,0.63,0.66,0.69,0.72,0.74,0.77,0.80,0.82,0.84,0.86,0.88,0.90,0.91,0.92,0.93,0.94,0.95,0.96,0.97,0.98,0.99,1.00];
 function rotIdealForWeeks(weeks){const w=Math.min(Math.round(weeks),ROT_TABLE.length-1);return ROT_TABLE[Math.max(0,w)];}
 // Calcula cumplimiento de rotación a nivel de grupo (categoría/colección) con lógica semanas
+// Base de rotación = unidades que llegaron a PDV = Venta + Inventario PDV (misma fórmula de "Rotación Total" del Excel)
+function rotBase(rows){return rows.reduce((s,d)=>s+(d.venta_total||0)+(d.inv_pdv||0),0);}
 function calcGrpEf(rows){
-  const totalIng=rows.reduce((s,d)=>s+d.ingreso_total,0);
+  const totalIng=rotBase(rows);
   const totalVta=rows.reduce((s,d)=>s+d.venta_total,0);
   if(totalIng<=0) return 0;
   const rotReal=totalVta/totalIng;
@@ -908,7 +910,7 @@ document.querySelectorAll('.tab').forEach(t=>{
       const fbRows=filteredBD().filter(d=>d.referencia===ref.r);
       const bdVt=fbRows.reduce((s,d)=>s+d.venta_total,0);
       const bdIt=fbRows.reduce((s,d)=>s+d.ingreso_total,0);
-      const bdRr=bdIt>0?bdVt/bdIt:0;
+      const bdBase=rotBase(fbRows);const bdRr=bdBase>0?bdVt/bdBase:0;
       const bdEf=fbRows.length?fbRows.reduce((s,d)=>s+d.eficiencia,0)/fbRows.length:avgEf;
       const bdRi=fbRows.length?fbRows.reduce((s,d)=>s+d.rot_ideal,0)/fbRows.length:0;
       const totCol=bdEf>=ROT_UMBRAL?'#22c55e':'#ef4444';
@@ -1237,7 +1239,7 @@ function renderColeccion(){
     const pctCump=refs>0?cumplen/refs:0;
     const totalIng=rows.reduce((s,d)=>s+d.ingreso_total,0);
     const totalVta=rows.reduce((s,d)=>s+d.venta_total,0);
-    const rotR=totalIng>0?totalVta/totalIng:0;
+    const _rb=rotBase(rows);const rotR=_rb>0?totalVta/_rb:0;
     const diasProm=refs>0?Math.round(rows.reduce((s,d)=>s+d.dias_pdv,0)/refs):0;
     const avgWeeks=refs>0?rows.reduce((s,d)=>s+(d.semanas_pdv||Math.round(d.dias_pdv/7)),0)/refs:0;
     const rotI=rotIdealForWeeks(avgWeeks);
@@ -1413,7 +1415,7 @@ function buildColGrouped(bd){
         const no=r.length-si;
         const ef=calcGrpEf(r);
         const tIng=r.reduce((s,d)=>s+d.ingreso_total,0),tVta=r.reduce((s,d)=>s+d.venta_total,0);
-        const rotR=tIng>0?tVta/tIng:0;
+        const _rb=rotBase(r);const rotR=_rb>0?tVta/_rb:0;
         const dias=r.length?Math.round(r.reduce((s,d)=>s+d.dias_pdv,0)/r.length):0;
         const sems=Math.round(dias/7);
         const rotI=rotIdealForWeeks(sems);
@@ -1475,7 +1477,7 @@ function buildColGrouped(bd){
   function totRow(label, r, isTotal){
     const ef=calcGrpEf(r);
     const tIng=r.reduce((s,d)=>s+d.ingreso_total,0),tVta=r.reduce((s,d)=>s+d.venta_total,0);
-    const rotR=tIng>0?tVta/tIng:0;
+    const _rb=rotBase(r);const rotR=_rb>0?tVta/_rb:0;
     const dias=r.length?Math.round(r.reduce((s,d)=>s+d.dias_pdv,0)/r.length):0;
     const sems=Math.round(dias/7);
     const rotI=rotIdealForWeeks(sems);
