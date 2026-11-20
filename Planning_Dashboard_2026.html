@@ -697,8 +697,9 @@ document.querySelectorAll('.tab').forEach(t=>{
       const fbRows=filteredBD();
       const seen={};
       fbRows.forEach(d=>{
-        if(!seen[d.referencia]||d.eficiencia>seen[d.referencia].ef){
-          seen[d.referencia]={
+        const _k=d.foto||d.ref_color||d.referencia;
+        if(!seen[_k]||d.eficiencia>seen[_k].ef){
+          seen[_k]={
             r:d.referencia,g:d.genero.charAt(0).toUpperCase(),
             k:BDT_C.indexOf(d.categoria),fo:d.foto,cl:d.coleccion_anio,ti:-1,
             rr:d.rot_real,ri:d.rot_ideal||0,ef:d.eficiencia,
@@ -757,14 +758,19 @@ document.querySelectorAll('.tab').forEach(t=>{
     // Build ref_color lookup from BD_ALL
     if(!window._rtRcLkp){
       window._rtRcLkp={};
-      BD_ALL.forEach(d=>{if(d.referencia&&!window._rtRcLkp[d.referencia])window._rtRcLkp[d.referencia]={rc:d.ref_color||d.referencia,pvp:d.pvp,fit:d.fit,pir:d.piramide,fo:d.foto||''};});
+      window._rtFoLkp={};
+      BD_ALL.forEach(d=>{
+        const o={rc:d.ref_color||d.referencia,pvp:d.pvp,fit:d.fit,pir:d.piramide,fo:d.foto||''};
+        if(d.foto)window._rtFoLkp[d.foto]=o;
+        if(d.referencia&&!window._rtRcLkp[d.referencia])window._rtRcLkp[d.referencia]=o;
+      });
     }
     const cards=rows.map(r=>{
       const cumple=r.ef>=ROT_UMBRAL,cc=cumple?'#22c55e':'#ef4444',bg=cumple?'rgba(34,197,94,0.08)':'rgba(239,68,68,0.08)';
       const _fo=r.fo||(window._rtRcLkp[r.r]||{}).fo||'';
       const furl=_fo?IMG_BASE+_fo+'.jpg':'';
       const img=furl?`<img src="${furl}" class="rt-img" loading="lazy" onerror="this.parentNode.innerHTML='<div class=rt-noimg>👕</div>'">`:'<div class="rt-noimg">👕</div>';
-      const lkp=window._rtRcLkp[r.r]||{};
+      const lkp=(r.fo&&window._rtFoLkp[r.fo])||window._rtRcLkp[r.r]||{};
       const refColor=(lkp.rc||r.r).replace(r.r,'').trim()||lkp.rc||r.r;
       const pvpFmt=lkp.pvp?'$'+Math.round(lkp.pvp).toLocaleString():'—';
       const compraIdeal=r.ci!=null?r.ci:0;
@@ -825,7 +831,16 @@ document.querySelectorAll('.tab').forEach(t=>{
   let rrInit=false;
   // Build BD_ALL lookup: {ref: {ref_color, pvp, fit, piramide}}
   const _rrLkp={};
-  BD_ALL.forEach(d=>{if(!_rrLkp[d.referencia])_rrLkp[d.referencia]={rc:d.ref_color||d.referencia,pvp:d.pvp,fit:d.fit,pir:d.piramide,fo:d.foto||''};});
+  const _rrFoLkp={};
+  BD_ALL.forEach(d=>{
+    const o={rc:d.ref_color||d.referencia,pvp:d.pvp,fit:d.fit,pir:d.piramide,fo:d.foto||''};
+    if(d.foto)_rrFoLkp[d.foto]=o;
+    if(!_rrLkp[d.referencia])_rrLkp[d.referencia]=o;
+  });
+  // Cada color de una referencia es un recuadro aparte: la clave es la foto (única por referencia-color)
+  const rrKey=r=>r.fo||r.r;
+  const rrLk=ref=>(ref.fo&&_rrFoLkp[ref.fo])||_rrLkp[ref.r]||{};
+  const rrBD=ref=>filteredBD().filter(d=>ref.fo&&_rrFoLkp[ref.fo]?d.foto===ref.fo:d.referencia===ref.r);
   const fmt=n=>new Intl.NumberFormat('es-CO',{minimumFractionDigits:0,maximumFractionDigits:0}).format(n);
 
   function _rr(){
@@ -836,11 +851,12 @@ document.querySelectorAll('.tab').forEach(t=>{
     if(fCol&&fCol.length)rows=rows.filter(r=>fCol.includes(r.cl));
     if(fGen&&fGen.length){const gs=new Set(fGen.map(g=>g.charAt(0).toUpperCase()));rows=rows.filter(r=>gs.has(r.g));}
     if(fCat){const ci=BDT_C.indexOf(fCat);if(ci>=0)rows=rows.filter(r=>r.k===ci);}
-    // Group by referencia
+    // Group by referencia-color
     const refMap={};
     rows.forEach(r=>{
-      if(!refMap[r.r])refMap[r.r]={r:r.r,g:r.g,k:r.k,fo:r.fo,t:new Array(15).fill(null)};
-      if(r.ti>=0&&r.ti<15)refMap[r.r].t[r.ti]=r;if(!refMap[r.r].fo&&r.fo)refMap[r.r].fo=r.fo;
+      const _k=rrKey(r);
+      if(!refMap[_k])refMap[_k]={r:r.r,g:r.g,k:r.k,fo:r.fo,t:new Array(15).fill(null)};
+      if(r.ti>=0&&r.ti<15)refMap[_k].t[r.ti]=r;
     });
     // Sort refs: most tiendas cumpliendo first, then avg ef
     const refs=Object.values(refMap).sort((a,b)=>{
@@ -855,12 +871,12 @@ document.querySelectorAll('.tab').forEach(t=>{
     const rrQ=(document.getElementById('rr-search')||{}).value||'';
     const rrQl=rrQ.trim().toLowerCase();
     const refsF=rrQl?refs.filter(r=>{
-      const lk=_rrLkp[r.r]||{};
+      const lk=rrLk(r);
       return r.r.toLowerCase().includes(rrQl)||(lk.rc||'').toLowerCase().includes(rrQl);
     }):refs;
     if(!refsF.length){document.getElementById('rr-list').innerHTML='<div style="color:var(--text3);padding:32px;text-align:center">Sin datos para esta selección</div>';return;}
     const items=refsF.map(ref=>{
-      const lkp=_rrLkp[ref.r]||{};
+      const lkp=rrLk(ref);
       const _fo=ref.fo||lkp.fo||'';
       const furl=_fo?IMG_BASE+_fo+'.jpg':'';
       const img=furl?`<img src="${furl}" class="rr-img" loading="lazy" onerror="this.parentNode.innerHTML='<div class=rr-noimg>👕</div>'">`:'<div class="rr-noimg">👕</div>';
@@ -884,7 +900,7 @@ document.querySelectorAll('.tab').forEach(t=>{
       const avgRr=tiendaRows.length?tiendaRows.reduce((s,x)=>s+x.rr,0)/tiendaRows.length:0;
       const avgEf=tiendaRows.length?tiendaRows.reduce((s,x)=>s+x.ef,0)/tiendaRows.length:0;
       const totIv=tiendaRows.reduce((s,x)=>s+(x.iv||0),0);
-      const bdCi=(filteredBD().find(d=>d.referencia===ref.r)||{}).compra_ideal;
+      const bdCi=(rrBD(ref)[0]||{}).compra_ideal;
       const totCi=bdCi!=null?Math.round(bdCi):tiendaRows.reduce((s,x)=>s+(x.ci||0),0);
       const avgDi=tiendaRows.length?Math.round(tiendaRows.reduce((s,x)=>s+x.di,0)/tiendaRows.length):0;
       const trows=tiendaRows.map(td=>{
@@ -907,7 +923,7 @@ document.querySelectorAll('.tab').forEach(t=>{
         </tr>`;
       }).join('');
       // Total row from BD_ALL (filtered) — same formulas as Rotación por Colección
-      const fbRows=filteredBD().filter(d=>d.referencia===ref.r);
+      const fbRows=rrBD(ref);
       const bdVt=fbRows.reduce((s,d)=>s+d.venta_total,0);
       const bdIt=fbRows.reduce((s,d)=>s+d.ingreso_total,0);
       const bdBase=rotBase(fbRows);const bdRr=bdBase>0?bdVt/bdBase:0;
